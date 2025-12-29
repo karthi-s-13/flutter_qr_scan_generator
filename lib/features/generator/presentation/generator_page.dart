@@ -23,7 +23,11 @@ class _GeneratorPageState extends State<GeneratorPage> {
   final TextEditingController urlCtrl = TextEditingController();
   final TextEditingController wifiNameCtrl = TextEditingController();
   final TextEditingController wifiPassCtrl = TextEditingController();
-  final TextEditingController contactCtrl = TextEditingController();
+  final TextEditingController nameCtrl = TextEditingController();
+  final TextEditingController phoneCtrl = TextEditingController();
+  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController orgCtrl = TextEditingController();
+
   final TextEditingController textCtrl = TextEditingController();
 
   String qrData = '';
@@ -37,7 +41,6 @@ class _GeneratorPageState extends State<GeneratorPage> {
     urlCtrl.dispose();
     wifiNameCtrl.dispose();
     wifiPassCtrl.dispose();
-    contactCtrl.dispose();
     textCtrl.dispose();
     super.dispose();
   }
@@ -54,8 +57,17 @@ class _GeneratorPageState extends State<GeneratorPage> {
               "WIFI:T:WPA;S:${wifiNameCtrl.text};P:${wifiPassCtrl.text};;";
           break;
         case QRCategory.contact:
-          qrData = contactCtrl.text;
+          qrData = '''
+        BEGIN:VCARD
+        VERSION:3.0
+        FN:${nameCtrl.text}
+        TEL:${phoneCtrl.text}
+        EMAIL:${emailCtrl.text}
+        ORG:${orgCtrl.text}
+        END:VCARD
+        ''';
           break;
+
         case QRCategory.text:
           qrData = textCtrl.text;
           break;
@@ -159,26 +171,28 @@ class _GeneratorPageState extends State<GeneratorPage> {
             const SizedBox(height: 24),
 
             if (qrData.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: QrImageView(
-                  data: qrData,
-                  size: 160,
-                  foregroundColor: qrColor,
-                  backgroundColor: bgColor,
-                  embeddedImage: showLogo
-                      ? const AssetImage('assets/logo.png')
-                      : null,
-                  embeddedImageStyle:
-                      const QrEmbeddedImageStyle(
-                    size: Size(32, 32),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: QrImageView(
+                    data: qrData,
+                    size: 160,
+                    foregroundColor: qrColor,
+                    backgroundColor: bgColor,
+                    embeddedImage: showLogo
+                        ? const AssetImage('assets/logo.png')
+                        : null,
+                    embeddedImageStyle: const QrEmbeddedImageStyle(
+                      size: Size(32, 32),
+                    ),
                   ),
                 ),
               )
+
             else
               const Center(
                 child: Text(
@@ -289,7 +303,18 @@ class _GeneratorPageState extends State<GeneratorPage> {
           ],
         );
       case QRCategory.contact:
-        return _inputField(contactCtrl, "Contact details");
+        return Column(
+          children: [
+            _inputField(nameCtrl, "Full Name"),
+            const SizedBox(height: 12),
+            _inputField(phoneCtrl, "Phone Number"),
+            const SizedBox(height: 12),
+            _inputField(emailCtrl, "Email Address"),
+            const SizedBox(height: 12),
+            _inputField(orgCtrl, "Organization (optional)"),
+          ],
+        );
+
       case QRCategory.text:
         return _inputField(textCtrl, "Enter text");
     }

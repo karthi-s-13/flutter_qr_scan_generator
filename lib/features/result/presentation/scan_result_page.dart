@@ -101,22 +101,46 @@ class _ScanResultPageState extends State<ScanResultPage>
     }
   }
 
+  Uri? _safeParseUrl(String raw) {
+    final value = raw.trim();
+
+  // Already valid URL
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return Uri.tryParse(value);
+    }
+
+  // Handle URLs like google.com / www.google.com
+    if (value.contains('.') && !value.contains(' ')) {
+      return Uri.tryParse('https://$value');
+  }
+
+    return null;
+  }
+
 
   // ---------------- OPEN URL ----------------
   Future<void> _openBrowser() async {
-    final uri = Uri.parse(widget.result);
+    final uri = _safeParseUrl(widget.result);
 
-    if (await canLaunchUrl(uri)) {
+    if (uri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid URL")),
+      );
+      return;
+    }
+
+    try {
       await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
       );
-    } else {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Could not launch URL")),
+        const SnackBar(content: Text("Could not open browser")),
       );
     }
   }
+
 
   // ---------------- INIT ----------------
   @override
