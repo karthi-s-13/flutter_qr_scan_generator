@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:android_intent_plus/android_intent.dart';
+
 
 enum QRType { url, wifi, contact, text }
 
@@ -100,6 +102,14 @@ class _ScanResultPageState extends State<ScanResultPage>
       );
     }
   }
+
+  Future<void> _openWifiSettings() async {
+  const intent = AndroidIntent(
+    action: 'android.settings.WIFI_SETTINGS',
+  );
+  await intent.launch();
+}
+
 
   Uri? _safeParseUrl(String raw) {
     final value = raw.trim();
@@ -333,9 +343,7 @@ class _ScanResultPageState extends State<ScanResultPage>
                 ),
               ),
             );
-            await launchUrl(
-              Uri.parse('android.settings.WIFI_SETTINGS'),
-            );
+            await _openWifiSettings();
           },
         ),
       );

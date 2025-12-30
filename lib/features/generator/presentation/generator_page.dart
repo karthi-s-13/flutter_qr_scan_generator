@@ -109,7 +109,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder, Rect.fromLTWH(0,0, size.toDouble(), size.toDouble()));
 
-    final paint = Paint()..color = bgColor;
+    //final paint = Paint()..color = bgColor;
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
       Paint()..color = bgColor,
