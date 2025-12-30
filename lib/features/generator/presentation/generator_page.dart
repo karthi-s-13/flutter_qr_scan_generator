@@ -4,9 +4,23 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+//import '../../customize/presentation/customize_qr_page.dart';
+//import '../../customize/model/qr_style_result.dart';
+
+
+class QrStyleResult {
+  final Color qrColor;
+  final Color bgColor;
+  final bool showLogo;
+
+  QrStyleResult({
+    required this.qrColor,
+    required this.bgColor,
+    required this.showLogo,
+  });
+}
 
 enum QRCategory { url, wifi, contact, text }
 
@@ -76,18 +90,36 @@ class _GeneratorPageState extends State<GeneratorPage> {
   }
 
   // ---------------- QR PAINTER (CORE) ----------------
-  Future<Uint8List> _generateQrPng() async {
+  Future<Uint8List> _generateQrPng({int size = 800}) async {
+    const int padding = 32;
+
     final painter = QrPainter(
       data: qrData,
       version: QrVersions.auto,
       gapless: true,
       color: qrColor,
       emptyColor: bgColor,
+      embeddedImageStyle: const QrEmbeddedImageStyle(
+        size: Size(40,40),
+      ),
     );
 
-    final image = await painter.toImage(800); // HIGH RES
-    final byteData =
-        await image.toByteData(format: ImageByteFormat.png);
+    final qrImage = await painter.toImage(size - padding * 2);
+
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromLTWH(0,0, size.toDouble(), size.toDouble()));
+
+    final paint = Paint()..color = bgColor;
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
+      Paint()..color = bgColor,
+    );
+
+    canvas.drawImage(qrImage, Offset(padding.toDouble(), padding.toDouble()), Paint());
+
+    final pciture = recorder.endRecording();
+    final finalImage = await pciture.toImage(size, size);
+    final byteData = await finalImage.toByteData(format: ImageByteFormat.png);
 
     return byteData!.buffer.asUint8List();
   }
@@ -115,7 +147,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
           content: Text("QR saved to Downloads/QR Scanner"),
         ),
       );
-    } catch (_) {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to save QR")),
       );
@@ -206,16 +238,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
 
             
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed:
-                    qrData.isEmpty ? null : _openCustomizeSheet,
-                child: const Text("Customize QR"),
-              ),
-            ),
-
-            const SizedBox(height: 32),
+            
 
             
 
@@ -335,57 +358,6 @@ class _GeneratorPageState extends State<GeneratorPage> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-
-  // ---------------- CUSTOMIZE SHEET ----------------
-  void _openCustomizeSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF0B0F14),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _colorPicker("QR Color", qrColor,
-                (c) => setState(() => qrColor = c)),
-            _colorPicker("Background", bgColor,
-                (c) => setState(() => bgColor = c)),
-            SwitchListTile(
-              value: showLogo,
-              title: const Text("Show Logo",
-                  style: TextStyle(color: Colors.white)),
-              onChanged: (v) =>
-                  setState(() => showLogo = v),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _colorPicker(
-      String label, Color color, Function(Color) onPick) {
-    return ListTile(
-      title: Text(label,
-          style: const TextStyle(color: Colors.white)),
-      trailing: GestureDetector(
-        onTap: () => showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            content: ColorPicker(
-              pickerColor: color,
-              onColorChanged: onPick,
-            ),
-          ),
-        ),
-        child: Container(
-          width: 30,
-          height: 30,
-          color: color,
         ),
       ),
     );
